@@ -109,6 +109,11 @@ class _demandmod(object):
         self._load()
         setattr(self._module, attr, val)
 
+try:
+    import __pypy__
+except ImportError:
+    __pypy__ = None
+
 def _demandimport(name, globals=None, locals=None, fromlist=None, level=level):
     if not locals or name in ignore or fromlist == ('*',):
         # these cases we can't really delay
@@ -127,6 +132,10 @@ def _demandimport(name, globals=None, locals=None, fromlist=None, level=level):
                 return locals[base]
         return _demandmod(name, globals, locals, level)
     else:
+        
+        if __pypy__ is not None and name.startswith('_ctypes.'):
+            return _hgextimport(_import, name, globals, locals, fromlist, level)
+
         if level != -1:
             # from . import b,c,d or from .a import b,c,d
             return _origimport(name, globals, locals, fromlist, level)
